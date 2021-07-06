@@ -1,3 +1,4 @@
+import 'package:boto/widgets/videoplayer.dart';
 import 'package:flutter/material.dart';
 
 import 'widgets/bottom.dart';

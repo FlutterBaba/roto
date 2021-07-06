@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:boto/models/company_model.dart';
 import 'package:boto/screeens/details_page.dart';
 import 'package:boto/widgets/navigate.dart';
@@ -15,6 +16,47 @@ class ViewPage extends StatefulWidget {
 }
 
 class _ViewPageState extends State<ViewPage> {
+  var k;
+  var model;
+  var intrand;
+  CompanyModel? companyModel;
+  List<CompanyModel> listOfCompanyProduct = [];
+
+  getData() {
+    List<CompanyModel> listOfProduct = [];
+    k.forEach(
+      (e) async => {
+        if (await e["company"] != null)
+          {
+            companyModel = CompanyModel(
+              nameku: e["company"]["name_ku"],
+              id: e["company"]['id'],
+              nameAr: e["company"]['name_ar'],
+              nameEn: e["company"]['name_en'],
+              image: e["company"]['image'],
+              view: e["company"]['view'],
+              cityId: e["company"]['city_id'],
+              descriptionKu: e["company"]["description_ku"],
+              descriptionAr: e["company"]['description_ar'],
+              descriptionEn: e["company"]["description_en"],
+              userId: e["company"]['user_id'],
+              createdBy: e["company"]["created_by"],
+              createdAt: e["company"]['created_at'],
+              updatedAt: e["company"]["updated_at"],
+            ),
+            // ignore: unnecessary_null_comparison
+
+            listOfProduct.add(companyModel!),
+          }
+      },
+    );
+    if (this.mounted) {
+      setState(() {
+        listOfCompanyProduct = listOfProduct;
+      });
+    }
+  }
+
   Widget buildProduct(
       {required image,
       required String title,
@@ -102,17 +144,8 @@ class _ViewPageState extends State<ViewPage> {
       Uri.parse(productApi),
     );
     if (response.statusCode == 200) {
-      var k = json.decode(response.body);
-
-      // k.forEach((e) {
-      //   if (e["company"] != null) {
-      //     print(e["company"]);
-      //   }
-      // });
-
-      print(response.body);
-
-      // print(k["brand_id"]);
+      k = json.decode(response.body);
+      getData();
       List jsonResponse = json.decode(response.body);
       return jsonResponse.map((job) => new SliderModel.fromJson(job)).toList();
     } else {
@@ -120,20 +153,49 @@ class _ViewPageState extends State<ViewPage> {
     }
   }
 
-  // Future<List<CompanyModel>> fetchCompanyProduct() async {
-  //   var productApi =
-  //       "https://boto.optimal.krd/api/car?fbclid=IwAR0w3C3d6szqA3J93NF-TxNU23-Hqgdc3ed0v4g3MZc8grAlPAw_ql05T2I";
-  //   var response = await http.get(
-  //     Uri.parse(productApi),
-  //   );
-  //   if (response.statusCode == 200) {
-  //     print(response.body);
-  //     List jsonResponse = json.decode(response.body);
-  //     return jsonResponse.map((job) => new CompanyModel.fromJson(job)).toList();
-  //   } else {
-  //     throw Exception('Failed to load jobs from API');
-  //   }
-  // }
+  Widget companyProduct({required title, required image}) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+      height: 300,
+      width: MediaQuery.of(context).size.width / 2 - 20,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        image: DecorationImage(
+          fit: BoxFit.cover,
+          image: NetworkImage("https://boto.optimal.krd/$image"),
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withOpacity(.5),
+              Colors.black.withOpacity(.5),
+              // Colors.black.withOpacity(.2),
+            ],
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 30,
+              ),
+            ),
+            SizedBox(
+              height: 30,
+            )
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +229,6 @@ class _ViewPageState extends State<ViewPage> {
               child: CircularProgressIndicator(),
             );
           }
-          // snapShot = snapshot;
 
           return ListView(
             children: [
@@ -262,18 +323,40 @@ class _ViewPageState extends State<ViewPage> {
                 itemBuilder: (context, index) {
                   var data = snapshot.data![index];
 
-                  print(data.companyId);
                   return buildProduct(
                     image: data.image,
                     price: data.price,
                     title: data.titleEn,
                     used: data.used,
                     onTap: () {
+                      k.forEach(
+                        (e) {
+                          if (e["brand"]["id"] == data.id) {
+                            if (e["brand"]["id"] == null) {
+                            } else {
+                              intrand = e["brand"]["name"];
+                            }
+                          }
+                          if (e["mod"]["id"] == data.modId) {
+                            if (e["mod"]["id"] == null) {
+                            } else {
+                              model = e["mod"]["name"];
+                            }
+                          }
+                        },
+                      );
+
+                      print(model);
                       navigate(
                         context: context,
                         navigateTo: DetailPage(
+                          descriptionEn: data.descriptionEn,
+                          model: model.toString(),
+                          condistion: data.used,
+                          view: data.view,
                           image: data.image,
-                          brande: data.titleAr,
+                          price: data.price,
+                          brande: intrand.toString(),
                         ),
                       );
                     },
@@ -305,39 +388,21 @@ class _ViewPageState extends State<ViewPage> {
                   ),
                 ),
               ),
-              // FutureBuilder<List<CompanyModel>>(
-              //   future: fetchCompanyProduct(),
-              //   builder: (context, snapshot) {
-              //     if (!snapshot.hasData) {
-              //       return Center(
-              //         child: CircularProgressIndicator(),
-              //       );
-              //     }
-              //     return GridView.builder(
-              //       shrinkWrap: true,
-              //       physics: NeverScrollableScrollPhysics(),
-              //       padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              //       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              //         crossAxisCount: 2,
-              //         mainAxisSpacing: 10,
-              //         childAspectRatio: 0.74,
-              //         crossAxisSpacing: 40,
-              //       ),
-              //       itemCount: snapshot.data!.length,
-              //       itemBuilder: (context, index) {
-              //         var data = snapshot.data![index];
-              //         print(data.nameku);
-              //         return Container();
-              //         // return buildProduct(
-              //         //   image: data.image,
-              //         //   price: data.price,
-              //         //   title: data.titleEn,
-              //         //   used: data.used,
-              //         // );
-              //       },
-              //     );
-              //   },
-              // ),
+              Row(
+                children: listOfCompanyProduct.map((e) {
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        companyProduct(
+                          title: e.nameEn,
+                          image: e.image,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ],
           );
         },

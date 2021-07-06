@@ -1,5 +1,6 @@
 class SliderModel {
   final int id;
+
   final int brandId;
   final int modId;
   final int companyId;
